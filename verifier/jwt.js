@@ -2,7 +2,19 @@ var express = require("express");
 const jwt = require("jsonwebtoken");
 var router = express.Router();
 
+const nodeMailer = require("nodemailer");
+const { response } = require("../app");
 require("dotenv").config();
+
+const transporter = nodeMailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASSWORD,
+  },
+});
+
+console.log(process.env.SMTP_USER, process.env.SMTP_PASSWORD);
 
 const verifyJwt = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -65,6 +77,22 @@ router.get("/", verifyJwt, function (req, res, next) {
       message: "Unauthorized Access 3",
     });
   }
+
+  const options = {
+    from: process.env.SMTP_USER,
+    to: user.email,
+    subject: "Welcome",
+    text: "Hello, I'm from nodemailer",
+  };
+
+  transporter.sendMail(options, function (err, info) {
+    if (err) {
+      console.error(err);
+      return;
+    }
+
+    console.log("sent", info.response);
+  });
   res.send({ message: "Welcome, You are Authorized to access" });
 });
 
