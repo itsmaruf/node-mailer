@@ -6,56 +6,66 @@ require("dotenv").config();
 
 const verifyJwt = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  // console.log(authHeader);
   if (!authHeader) {
-    return res.status(401).json({
-      status: 401,
-      message: "Unauthorized Access 1",
-    });
+    return res.status(401).send("Unauthorized request");
   }
-
   const token = authHeader.split(" ")[1];
   jwt.verify(token, process.env.SECRET_ACCESS_TOKEN, function (err, decoded) {
     if (err) {
-      return res.status(401).json({
-        status: 401,
-        message: "Unauthorized Access 2",
+      return res.status(401).send({
+        message: "Unauthorized request",
         error: err,
       });
     }
-
     req.decoded = decoded;
     next();
   });
-  // next();
 };
 
-router.get("/", function (req, res, next) {
-  res.send("Hello JWT!");
-});
+// router.get("/", function (req, res, next) {
+//   res.send("Hello JWT!");
+// });
 
-router.post("/", verifyJwt, async function (req, res, next) {
+router.post("/jwt", (req, res) => {
   const user = req.body;
-
   const token = jwt.sign(user, process.env.SECRET_ACCESS_TOKEN, {
     expiresIn: "1h",
   });
+  res.send({ token });
+  console.log({ ...user, token });
+});
 
+// router.post("/", verifyJwt, async function (req, res, next) {
+//   const user = req.body;
+
+//   const decoded = req.decoded;
+//   // console.log("decoded", decoded);
+
+//   if (decoded.email !== user.email && decoded.password !== user.password) {
+//     return res.status(401).json({
+//       status: 401,
+//       message: "Unauthorized Access 3",
+//       decoded,
+//       user,
+//     });
+//   }
+//   res.send({ token, decoded, user });
+//   console.log({ token, ...decoded });
+
+//   // console.log({ ...user, token });
+// });
+
+router.get("/", verifyJwt, function (req, res, next) {
   const decoded = req.decoded;
-  // console.log("decoded", decoded);
+  const user = req.query;
 
-  if (decoded.email !== user.email && decoded.password !== user.password) {
+  if (decoded.email !== user.email) {
     return res.status(401).json({
       status: 401,
       message: "Unauthorized Access 3",
-      decoded,
-      user,
     });
   }
-  res.send({ token, decoded, user });
-  console.log({ token, ...decoded });
-
-  // console.log({ ...user, token });
+  res.send({ message: "Welcome, You are Authorized to access" });
 });
 
 module.exports = router;
