@@ -37,9 +37,7 @@ const verifyJwt = (req, res, next) => {
   });
 };
 
-// router.get("/", function (req, res, next) {
-//   res.send("Hello JWT!");
-// });
+// register new user API
 
 router.post("/jwt", (req, res, next) => {
   const user = req.body;
@@ -62,30 +60,9 @@ router.post("/jwt", (req, res, next) => {
       });
     }
   });
-
-  // res.send({ token });
-  // console.log({ ...user, token });
 });
 
-// router.post("/", verifyJwt, async function (req, res, next) {
-//   const user = req.body;
-
-//   const decoded = req.decoded;
-//   // console.log("decoded", decoded);
-
-//   if (decoded.email !== user.email && decoded.password !== user.password) {
-//     return res.status(401).json({
-//       status: 401,
-//       message: "Unauthorized Access 3",
-//       decoded,
-//       user,
-//     });
-//   }
-//   res.send({ token, decoded, user });
-//   console.log({ token, ...decoded });
-
-//   // console.log({ ...user, token });
-// });
+// verify and login user API
 
 router.get("/", verifyJwt, function (req, res, next) {
   const decoded = req.decoded;
@@ -95,8 +72,11 @@ router.get("/", verifyJwt, function (req, res, next) {
     return res.status(401).json({
       status: 401,
       message: "Unauthorized Access 3",
+      // decoded,
+      // user,
     });
   }
+  // const userData = new loginModel(user);
 
   const options = {
     from: process.env.SMTP_USER,
@@ -105,15 +85,37 @@ router.get("/", verifyJwt, function (req, res, next) {
     text: "Hello, I'm from nodemailer",
   };
 
-  transporter.sendMail(options, function (err, info) {
-    if (err) {
-      console.error(err);
-      return;
-    }
+  // find user by email from mongoose
+  userModel.findOne(
+    { email: user.email, password: user.password },
+    function (err, user) {
+      if (err) {
+        console.log(err);
+        return next(err);
+      }
+      if (!user) {
+        return res.status(401).json({
+          status: 401,
+          message: "Sorry, We could't recognize you. maybe you are a bot",
+          // decoded,
+          // user,
+        });
+      } else {
+        res.send({ message: "Welcome, You are Authorized to access" });
+        transporter.sendMail(options, function (err, info) {
+          if (err) {
+            console.error(err);
+            return;
+          }
 
-    console.log("sent", info.response);
-  });
-  res.send({ message: "Welcome, You are Authorized to access" });
+          console.log("sent", info.response);
+        });
+        console.log(user);
+      }
+    }
+  );
+
+  //
 });
 
 module.exports = router;
