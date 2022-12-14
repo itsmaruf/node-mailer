@@ -5,6 +5,24 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var cors = require("cors");
 
+// mongoose config
+var mongoose = require("mongoose");
+mongoose.set("strictQuery", true);
+
+// get the url
+var dbURL = require("./mongoose.config").DB_URL;
+
+// connection
+mongoose.connect(dbURL);
+
+// check connection
+mongoose.connection.on("connected", () => {
+  console.log("Connected to MongoDB");
+});
+
+// importing models
+const userModel = require("./models/user.model");
+
 var jwtRouter = require("./verifier/jwt");
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");

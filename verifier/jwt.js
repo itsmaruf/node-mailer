@@ -3,8 +3,11 @@ const jwt = require("jsonwebtoken");
 var router = express.Router();
 
 const nodeMailer = require("nodemailer");
-const { response } = require("../app");
+// const { response } = require("../app");
 require("dotenv").config();
+
+// import model
+const userModel = require("../models/user.model");
 
 const transporter = nodeMailer.createTransport({
   service: "gmail",
@@ -38,13 +41,30 @@ const verifyJwt = (req, res, next) => {
 //   res.send("Hello JWT!");
 // });
 
-router.post("/jwt", (req, res) => {
+router.post("/jwt", (req, res, next) => {
   const user = req.body;
   const token = jwt.sign(user, process.env.SECRET_ACCESS_TOKEN, {
     expiresIn: "1h",
   });
-  res.send({ token });
-  console.log({ ...user, token });
+
+  let newUserData = new userModel({ ...user, token });
+
+  newUserData.save(function (err, newUser) {
+    if (err) {
+      console.log(err);
+      return next(err);
+    } else {
+      res.send({
+        status: "200",
+        message: "user info saved successfully",
+        contactObj: newUser,
+        success: true,
+      });
+    }
+  });
+
+  // res.send({ token });
+  // console.log({ ...user, token });
 });
 
 // router.post("/", verifyJwt, async function (req, res, next) {
